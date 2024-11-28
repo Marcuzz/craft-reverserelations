@@ -57,9 +57,6 @@ class ReverseEntries extends Entries
 
         // Overwrite inner join to switch sourceId and targetId
         if (!is_array($value) && $value !== '' && $element && $element->id) {
-            // Override 0 = 1 check from parent::normalizeValue()
-            $query->where('1 = 1');
-
             $targetField = Craft::$app->fields->getFieldByUid($this->targetFieldId);
             $relationsAlias = sprintf('relations_%s', StringHelper::randomString(10));
 
@@ -91,7 +88,7 @@ class ReverseEntries extends Entries
             ]));
 
             $inputSourceIds = $this->inputSourceIds();
-            if ($inputSourceIds != '*') {
+            if ($inputSourceIds !== '*') {
                 $query->where(['entries.sectionId' => $inputSourceIds]);
             }
         }
