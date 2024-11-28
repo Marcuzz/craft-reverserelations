@@ -191,26 +191,8 @@ trait ReverseRelationsTrait
      */
     protected function saveRelations(BaseRelationField $field, Element $source, array $targetIds): void
     {
-        if ($field->localizeRelations) {
-            $sourceSiteId = $source->siteId;
-        } else {
-            $sourceSiteId = null;
-        }
-
-        foreach ($targetIds as $sortOrder => $targetId) {
-            $criteria = [
-                'fieldId' => $field->id,
-                'sourceId' => $source->id,
-                'sourceSiteId' => $sourceSiteId,
-                'targetId' => $targetId,
-            ];
-
-            if (!(new Query())->select('id')->from(Table::RELATIONS)->where($criteria)->exists()) {
-                Craft::$app->getDb()->createCommand()
-                    ->insert(Table::RELATIONS, array_merge($criteria, ['sortOrder' => 1]))
-                    ->execute();
-            }
-        }
+        $source->setFieldValue($field->handle, $targetIds);
+        Craft::$app->getElements()->saveElement($source);
     }
 
     /**
@@ -222,26 +204,10 @@ trait ReverseRelationsTrait
      */
     private function deleteRelations(BaseRelationField $field, Element $source, array $targetIds): void
     {
-        // Delete the existing relations
-        $oldRelationConditions = [
-            'and',
-            [
-                'fieldId' => $field->id,
-                'sourceId' => $source->id,
-                'targetId' => $targetIds,
-            ],
-        ];
+        $currentFieldValue = $source->getFieldValue($field->handle)->ids();
+        $newIds = array_diff($currentFieldValue, $targetIds);
 
-        if ($field->localizeRelations) {
-            $oldRelationConditions[] = [
-                'or',
-                ['sourceSiteId' => null],
-                ['sourceSiteId' => $source->siteId],
-            ];
-        }
-
-        Craft::$app->getDb()->createCommand()
-            ->delete(Table::RELATIONS, $oldRelationConditions)
-            ->execute();
+        $source->setFieldValue($field->handle, $newIds);
+        Craft::$app->getElements()->saveElement($source);
     }
 }
