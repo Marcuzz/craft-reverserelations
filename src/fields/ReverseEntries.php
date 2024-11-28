@@ -37,6 +37,11 @@ class ReverseEntries extends Entries
         return Craft::t('reverserelations', 'Reverse Entry Relations');
     }
 
+    public static function dbType(): array|string|null
+    {
+        return null;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -50,14 +55,11 @@ class ReverseEntries extends Entries
         /** @var Element|null $element */
         $query = parent::normalizeValue($value, $element);
 
-        // Compare dbType to ensure backwards compatibility. dbType is null before Craft 5.3
-        $emptyValue = $this::dbType() === null ? !is_array($value) : (is_array($value) && empty($value));
-
         // Overwrite inner join to switch sourceId and targetId
-        if ($emptyValue && $value !== '' && $element && $element->id) {
+        if (!is_array($value) && $value !== '' && $element && $element->id) {
             // Override 0 = 1 check from parent::normalizeValue()
             $query->where('1 = 1');
-            
+
             $targetField = Craft::$app->fields->getFieldByUid($this->targetFieldId);
             $relationsAlias = sprintf('relations_%s', StringHelper::randomString(10));
 
